@@ -12,38 +12,34 @@ function onOpen() {
 }
     
 function runWPT() {
+    var WPTUrl = "https://www.webpagetest.org/runtest.php?url=";
+
     var settingsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Settings");
     var key = settingsSheet.getRange("B1:B1").getValue();
-    var WPTUrl = "https://www.webpagetest.org/runtest.php?url="+ url + "&k="+ key +"&f=json&fvonly=1";
+
+
     
     var results = [];
-  
-    var response = UrlFetchApp.fetch(WPTUrl);
-  
-    if (response.getResponseCode() == 200) {
-        var content = JSON.parse(response.getContentText());
+    var rows = settingsSheet.getLastRow();
 
-        if ((content != null) && (content["lighthouseResult"] != null)) {
+    //inicia for a partir da primeira URL na linha 4
+    for(var i=4; i <= rows; i++){ 
+        var url = settingsSheet.getRange(i, 1).getValue();
+        if (url != "") { 
+            var urlFinal = WPTUrl + url + "&k="+ key +"&f=json&fvonly=1";
+            var response = UrlFetchApp.fetch(urlFinal);
 
-                if (content["captchaResult"]) {
-                      var timetointeractive = content["lighthouseResult"]["audits"]["interactive"]["displayValue"].slice(0, -2);
-                      var firstcontentfulpaint = content["lighthouseResult"]["audits"]["first-contentful-paint"]["displayValue"].slice(0, -2);
-                      var firstmeaningfulpaint = content["lighthouseResult"]["audits"]["first-meaningful-paint"]["displayValue"].slice(0, -2);
-                      var timetofirstbyte = content["lighthouseResult"]["audits"]["time-to-first-byte"]["displayValue"].slice(19, -3);
-                      var speedindex = content["lighthouseResult"]["audits"]["speed-index"]["displayValue"].slice(0, -2);
-            } else {
-                      var timetointeractive = "An error occured";
-                      var firstcontentfulpaint = "An error occured";
-                      var firstmeaningfulpaint = "An error occured";
-                      var timetofirstbyte = "An error occured";
-                      var speedindex = "An error occured";
+            if (response.getResponseCode() == 200) {
+                var content = JSON.parse(response.getContentText());
+                var tempURL = content["data"]["jsonUrl"];
+
+                if (tempURL != "") { 
+                    var tempURLS = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Temp WPT URLs");
+                    var lastRows = tempURLS.getLastRow()+1;
+                    tempURLS.getRange(lastRows, "1").setValue(tempURL); //insere a URL temporaria na ultima linha da primeira coluna
+                }
             }
         }
-
-    var currentDate = new Date().toJSON().slice(0, 10).replace(/-/g, '/');
-
-    array.push([timetointeractive, firstcontentfulpaint, firstmeaningfulpaint, timetofirstbyte, speedindex, currentDate, "complete"]);
-    Utilities.sleep(1000);
-    return array;
-
+    }    
+  
 }
