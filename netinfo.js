@@ -1,7 +1,6 @@
 function netinfo()
 {
 	var elNetinfo = document.getElementById("netinfo");
-
 	var init = function() {
 
 		writesNetInfo(false);
